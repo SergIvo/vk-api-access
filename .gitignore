@@ -1,0 +1,4 @@
+venv
+.idea
+api_key.json
+vk_data_from_*
