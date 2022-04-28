@@ -82,6 +82,18 @@ class VK:
                   'count': number, 'offset': offset, 'post_id': post_id, 'extended': 1}
         return self.request_data(url, params)
 
+    def describe_groups(self, group_ids):
+        url = 'https://api.vk.com/method/groups.getById'
+        fields = 'activity,can_see_all_posts,members_count,trending'
+        if not isinstance(group_ids, str) and not hasattr(group_ids, 'keys'):
+            group_ids = ','.join(group_ids)
+            params = {'access_token': self.api_key, 'v': self.version, 'group_ids': group_ids, 'fields': fields}
+        elif isinstance(group_ids, str):
+            fields = fields + ',counters'
+            params = {'access_token': self.api_key, 'v': self.version, 'group_id': group_ids, 'fields': fields}
+        else:
+            raise ValueError('Method takes only group ID in string format or list of IDs in list-like object.')
+        return self.request_data(url, params)
 
 def save_json(data):
     title = 'vk_data_from_' + datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
@@ -93,6 +105,9 @@ def save_json(data):
 if __name__ == '__main__':
     vk = VK('your_app_id', '5.131')
 
-    data = vk.get_groups('sql')
-    groups_open = [item for item in data['items'] if item['is_closed'] == 0]
-    save_json(groups_open)
+    groups = vk.get_groups('sql')
+    ids = [str(item['id']) for item in groups['items'] if item['is_closed'] == 0][:200]
+    descriptions = vk.describe_groups(ids)
+    biggest = sorted(descriptions, key=lambda x: x['members_count'], reverse=True)[0]['id']
+    biggest_data = vk.describe_groups(str(biggest))
+    save_json(biggest_data)
